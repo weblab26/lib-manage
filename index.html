@@ -1,0 +1,121 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library Management System</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+
+<body ng-app="libraryApp" ng-controller="libraryController">
+
+    <h1>Library Management System</h1>
+
+    <form ng-submit="save()">
+        Book Name:
+        <input type="text" ng-model="book.name" required>
+        <br><br>
+
+        Book ID:
+        <input type="text" ng-model="book.bookId" required>
+        <br><br>
+
+        Author:
+        <input type="text" ng-model="book.author" required>
+        <br><br>
+
+        <button type="submit">
+            {{ editing ? 'Update' : 'Add' }} Book
+        </button>
+
+        <button type="button" ng-click="clear()">Clear</button>
+    </form>
+
+    <hr>
+
+    <h3>Book List</h3>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Book Name</th>
+            <th>Book ID</th>
+            <th>Author</th>
+            <th>Actions</th>
+        </tr>
+
+        <tr ng-repeat="b in books track by b._id">
+            <td>{{ b.name }}</td>
+            <td>{{ b.bookId }}</td>
+            <td>{{ b.author }}</td>
+            <td>
+                <button type="button" ng-click="edit(b)">Edit</button>
+                <button type="button" ng-click="remove(b._id)">Delete</button>
+            </td>
+        </tr>
+
+        <tr ng-if="books.length === 0">
+            <td colspan="4">No books found</td>
+        </tr>
+    </table>
+
+    <script>
+        var app = angular.module('libraryApp', []);
+
+        app.controller('libraryController', function ($scope, $http) {
+
+            $scope.books = [];
+            $scope.book = {};
+            $scope.editing = false;
+
+            // READ
+            function loadBooks() {
+                $http.get('/api/books').then(function (res) {
+                    $scope.books = res.data;
+                });
+            }
+
+            // CREATE and UPDATE
+            $scope.save = function () {
+                var request;
+
+                if ($scope.editing) {
+                    request = $http.put(
+                        '/api/books/' + $scope.book._id,
+                        $scope.book
+                    );
+                } else {
+                    request = $http.post('/api/books', $scope.book);
+                }
+
+                request.then(function () {
+                    loadBooks();
+                    $scope.clear();
+                });
+            };
+
+            // EDIT
+            $scope.edit = function (b) {
+                $scope.book = angular.copy(b);
+                $scope.editing = true;
+            };
+
+            // DELETE
+            $scope.remove = function (id) {
+                $http.delete('/api/books/' + id).then(function () {
+                    loadBooks();
+                    $scope.clear();
+                });
+            };
+
+            // CLEAR
+            $scope.clear = function () {
+                $scope.book = {};
+                $scope.editing = false;
+            };
+
+            loadBooks();
+        });
+    </script>
+
+</body>
+</html>
+```
